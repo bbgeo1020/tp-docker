@@ -1,0 +1,40 @@
+services:
+  database:
+    build: ./database
+    container_name: database
+    networks:
+      - app-network
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: usr
+      POSTGRES_PASSWORD: pwd
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: backend
+    networks:
+      - app-network
+    depends_on:
+      - database
+    restart: unless-stopped
+
+  httpd:
+    build: ./http-server
+    container_name: http-server
+    ports:
+      - "8090:80"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
