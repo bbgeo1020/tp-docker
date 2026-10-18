@@ -85,6 +85,7 @@ docker ps
 docker logs database
 docker exec -it database psql -U usr -d db -c "SELECT * FROM students;"
 ```
+![Adminer : table students](docs/adminer.png)
 
 ### 1-4 Pourquoi un multistage build ? Explication du Dockerfile
 
