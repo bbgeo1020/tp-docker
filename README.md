@@ -228,6 +228,8 @@ volumes:
 - **volumes** : déclare le volume nommé `db-data`.
 - **restart: unless-stopped** : les conteneurs redémarrent après un crash ou un redémarrage de la machine, sauf arrêt manuel.
 
+- **healthcheck** : chaque service est surveillé par Docker. `database` utilise `pg_isready`, `backend` interroge `/actuator/health` de Spring Boot, `httpd` vérifie que le port 80 répond. Avec `depends_on` et `condition: service_healthy`, les services démarrent dans l'ordre (base, backend, proxy), chacun attendant que le précédent soit réellement prêt, et pas seulement lancé.
+
 ### 1-9 Publication sur Docker Hub
 
 ```bash

@@ -3,19 +3,32 @@ services:
     build: ./database
     container_name: database
     networks:
-      - app-network
+      - back-network
     env_file: .env
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   backend:
     build: ./backend
     container_name: backend
     networks:
-      - app-network
+      - front-network
+      - back-network
     depends_on:
-      - database
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     restart: unless-stopped
 
   httpd:
@@ -24,13 +37,21 @@ services:
     ports:
       - "8090:80"
     networks:
-      - app-network
+      - front-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/80"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
 networks:
-  app-network:
+  front-network:
+    driver: bridge
+  back-network:
     driver: bridge
 
 volumes:
