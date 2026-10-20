@@ -22,3 +22,41 @@ jobs:
       # Build + tests unitaires et d'intégration
       - name: Build and test with Maven
         run: mvn clean verify --file ./backend/pom.xml
+
+  build-and-push-docker-image:
+    # Ne tourne que si la compilation et les tests passent
+    needs: test-backend
+    runs-on: ubuntu-24.04
+    steps:
+      # Récupère le code du dépôt
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Connexion à Docker Hub avec les secrets GitHub
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      # Image du backend (dossier backend)
+      - name: Build image and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
+          # build sur toutes les branches, push seulement sur main
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      # Image de la base de données (dossier database)
+      - name: Build image and push database
+        uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      # Image du serveur web (dossier http-server)
+      - name: Build image and push httpd
+        uses: docker/build-push-action@v6
+        with:
+          context: ./http-server
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
+          push: ${{ github.ref == 'refs/heads/main' }}
