@@ -27,7 +27,7 @@ jobs:
 
       # Analyse de qualité du code avec SonarCloud (Quality Gate)
       - name: SonarCloud analysis
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=bbgeo1020_tp-docker -Dsonar.organization=bbgeo1020 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }} --file ./backend/pom.xml
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=bbgeo1020_tp-docker -Dsonar.organization=bbgeo1020 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }} --file ./backend/pom.xml
 
   build-and-push-docker-image:
     # Ne tourne que si la compilation et les tests passent
