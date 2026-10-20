@@ -1,6 +1,6 @@
 name: CI devops 2025
 on:
-  # On lance le pipeline sur main et develop
+  # Tests sur main et develop, et sur les pull requests
   push:
     branches: [main, develop]
   pull_request:
@@ -28,44 +28,3 @@ jobs:
       # Analyse de qualité du code avec SonarCloud (Quality Gate)
       - name: SonarCloud analysis
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=bbgeo1020_tp-docker -Dsonar.organization=bbgeo1020 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }} --file ./backend/pom.xml
-
-  build-and-push-docker-image:
-    # Ne tourne que si la compilation et les tests passent
-    needs: test-backend
-    runs-on: ubuntu-24.04
-    steps:
-      # Récupère le code du dépôt
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Connexion à Docker Hub avec les secrets GitHub
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # Image du backend (dossier backend)
-      - name: Build image and push backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simple-api:latest
-          # build sur toutes les branches, push seulement sur main
-          push: ${{ github.ref == 'refs/heads/main' }}
-
-      # Image de la base de données (dossier database)
-      - name: Build image and push database
-        uses: docker/build-push-action@v6
-        with:
-          context: ./database
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
-          push: ${{ github.ref == 'refs/heads/main' }}
-
-      # Image du serveur web (dossier http-server)
-      - name: Build image and push httpd
-        uses: docker/build-push-action@v6
-        with:
-          context: ./http-server
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
-          push: ${{ github.ref == 'refs/heads/main' }}
