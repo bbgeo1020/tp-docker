@@ -19,7 +19,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # Build + tests unitaires et d'intégration
+      # Build + tests unitaires et d'intégration (Testcontainers lance PostgreSQL)
       - name: Build and test with Maven
         run: mvn clean verify --file ./backend/pom.xml
 
@@ -32,13 +32,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-       # Connexion à Docker Hub avec les secrets GitHub
+      # Connexion à Docker Hub avec les secrets GitHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
+
       # Image du backend (dossier backend)
       - name: Build image and push backend
         uses: docker/build-push-action@v6
