@@ -9,8 +9,10 @@ jobs:
   test-backend:
     runs-on: ubuntu-24.04
     steps:
-      # Récupère le code du dépôt
+      # Récupère le code du dépôt (historique complet pour SonarCloud)
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Installe JDK 21
       - name: Set up JDK 21
@@ -22,6 +24,10 @@ jobs:
       # Build + tests unitaires et d'intégration (Testcontainers lance PostgreSQL)
       - name: Build and test with Maven
         run: mvn clean verify --file ./backend/pom.xml
+
+      # Analyse de qualité du code avec SonarCloud (Quality Gate)
+      - name: SonarCloud analysis
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=bbgeo1020_tp-docker -Dsonar.organization=bbgeo1020 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }} --file ./backend/pom.xml
 
   build-and-push-docker-image:
     # Ne tourne que si la compilation et les tests passent
