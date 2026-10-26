@@ -9,6 +9,8 @@
 - hosts: all
   gather_facts: false
   become: true
+  vars_files:
+    - vars/secrets.yml
   vars:
     ansible_python_interpreter: /opt/docker_venv/bin/python3
     docker_user: geoanna
@@ -17,8 +19,6 @@
     image_proxy: tp-devops-httpd
     image_front: tp-devops-front
     db_name: db
-    db_user: usr
-    db_password: pwd
   roles:
     - create_network
     - launch_database

@@ -58,32 +58,41 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-front:latest
           push: true
 
-  # Déploiement automatique sur le serveur avec Ansible
+    # Déploiement automatique : Ansible lancé dans un conteneur Docker, secrets déchiffrés par le vault
   deploy:
-    # Se lance seulement après la publication des images
     needs: build-and-push-docker-image
     runs-on: ubuntu-24.04
     steps:
-      # Récupère le code (pour avoir le dossier ansible/)
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      # Installe Ansible sur le runner
-      - name: Install Ansible
-        run: pipx install --include-deps ansible
-
-      # Écrit la clé SSH à l'endroit attendu par l'inventaire (~/.ssh/id_rsa)
-      - name: Set up SSH key
+      # Prépare la clé SSH et le mot de passe du vault (depuis les secrets GitHub)
+      - name: Set up secrets
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ~/.vault_pass
+          chmod 600 ~/.vault_pass
 
-      # Lance le playbook
-      - name: Deploy with Ansible
-        working-directory: ./ansible
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-        run: ansible-playbook -i inventories/setup.yml playbook.yml
+      # Construit l'image qui contient Ansible
+      - name: Build Ansible image
+        run: docker build -t ansible-runner ./ansible
+
+      # Lance le playbook dans le conteneur
+      - name: Deploy with Ansible (in Docker, with Vault)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/ansible:/ansible \
+            -v $HOME/.ssh/id_rsa:/root/.ssh/id_rsa:ro \
+            -v $HOME/.vault_pass:/root/.vault_pass:ro \
+            -e ANSIBLE_HOST_KEY_CHECKING=False \
+            ansible-runner \
+            ansible-playbook -i inventories/setup.yml playbook.yml --vault-password-file /root/.vault_pass
+
+      # Supprime les secrets du runner
+      - name: Clean up secrets
+        if: always()
+        run: rm -f ~/.ssh/id_rsa ~/.vault_pass
