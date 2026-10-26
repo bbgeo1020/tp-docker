@@ -1,6 +1,25 @@
+# Play 1 : installer Docker (Python système, nécessaire pour apt)
 - hosts: all
   gather_facts: true
   become: true
-
   roles:
     - docker
+
+# Play 2 : déployer l'application (Python du venv, qui contient le SDK Docker)
+- hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    ansible_python_interpreter: /opt/docker_venv/bin/python3
+    docker_user: geoanna
+    image_db: tp-devops-database
+    image_api: tp-devops-simple-api
+    image_proxy: tp-devops-httpd
+    db_name: db
+    db_user: usr
+    db_password: pwd
+  roles:
+    - create_network
+    - launch_database
+    - launch_app
+    - launch_proxy

@@ -1,0 +1,11 @@
+---
+- name: Run HTTPD proxy container
+  community.docker.docker_container:
+    name: httpd
+    image: "{{ docker_user }}/{{ image_proxy }}:latest"
+    pull: always
+    restart_policy: always
+    networks:
+      - name: app-network
+    ports:
+      - "80:80"
