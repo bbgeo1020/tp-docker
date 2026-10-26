@@ -49,6 +49,15 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
           push: true
 
+
+      # Image du front
+      - name: Build image and push front
+        uses: docker/build-push-action@v6
+        with:
+          context: ./front
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-front:latest
+          push: true
+
   # Déploiement automatique sur le serveur avec Ansible
   deploy:
     # Se lance seulement après la publication des images
